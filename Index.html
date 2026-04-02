@@ -3,174 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railway Signaling Report Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>S&T Dhanbad : Advanced Analysis Dashboard</title>
+    <!-- Official SheetJS Stable Library -->
+    <script type="text/javascript" src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    
     <style>
-        .loader { border-top-color: #3498db; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f4f8; color: #333; padding: 15px; }
+        .container { max-width: 1600px; margin: 0 auto; }
+
+        /* Header & Filters */
+        .header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: white; padding: 15px 25px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .filter-panel { background: white; padding: 15px; border-radius: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; border: 1px solid #d1d5db; margin-bottom: 15px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 10px; font-weight: bold; color: #4b5563; text-transform: uppercase; margin-bottom: 4px; }
+        .filter-group input, .filter-group select { padding: 8px; border: 1px solid #9ca3af; border-radius: 5px; font-size: 12px; outline: none; }
+
+        /* Analysis Cards */
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px; display: none; }
+        .card { background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #2563eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .card-label { font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #f3f4f6; margin-bottom: 10px; padding-bottom: 5px; text-transform: uppercase; }
+        
+        .item-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 6px 8px; border-bottom: 1px dashed #e5e7eb; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .item-row:hover { background: #f1f5f9; }
+        .item-name { font-weight: 600; color: #374151; }
+        
+        /* Clean Down Arrow Icon */
+        .dl-icon { background: #eff6ff; color: #2563eb; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-weight: bold; border: 1px solid #dbeafe; }
+        .item-row:hover .dl-icon { background: #2563eb; color: white; border-color: #2563eb; }
+
+        /* Table Section & Remarks Fix */
+        .preview-card { background: white; border-radius: 10px; display: none; border: 1px solid #d1d5db; overflow: hidden; }
+        .table-header { padding: 12px 20px; border-bottom: 1px solid #d1d5db; display: flex; justify-content: space-between; align-items: center; background: #f9fafb; }
+        .table-container { overflow-x: auto; max-height: 500px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        thead th { background: #1f2937; color: white; padding: 12px; text-align: left; position: sticky; top: 0; z-index: 10; border-right: 1px solid #374151; }
+        tbody td { padding: 10px; border: 1px solid #e5e7eb; white-space: nowrap; }
+        
+        .remarks-cell { 
+            max-width: 240px !important; 
+            overflow: hidden !important; 
+            text-overflow: ellipsis !important; 
+            white-space: nowrap !important; 
+        }
+        tbody tr:hover { background: #f8fafc; }
+
+        .btn-gen { background: #2563eb; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: auto; }
+        .btn-gen:hover { background: #1d4ed8; }
+        #loading { text-align: center; display: none; padding: 30px; font-weight: bold; color: #1e40af; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <div class="max-w-7xl mx-auto p-6">
-        <!-- Header -->
-        <div class="bg-blue-800 text-white p-6 rounded-xl shadow-lg mb-8 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold italic">S&T Failure Reporting System</h1>
-                <p class="text-blue-100 text-sm">East Central Railway : Dhanbad - Multi-Filter Query Engine</p>
-            </div>
-            <img src="https://upload.wikimedia.org" class="h-16">
-        </div>
+<body>
 
-        <!-- Filters Section -->
-        <div class="bg-white p-6 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 border border-gray-200">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">From Date</label>
-                <input type="date" id="startDate" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">To Date</label>
-                <input type="date" id="endDate" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Station Code (Optional)</label>
-                <input type="text" id="stationInput" placeholder="e.g. DHN, GMO" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-blue-500 uppercase">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Officer</label>
-                <select id="officer" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm">
-                  <option value="">All Officers</option>
-                  <option>DSTE/DHN</option><option>DSTE/W/DHN</option><option>ASTE/DHN</option>
-                  <option>ASTE/GMO</option><option>ASTE/KQR</option><option>ASTE/BRKA</option>
-                  <option>ASTE/DTO</option><option>DSTE/CPU</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Asset Make</label>
-                <select id="asset" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm">
-                  <option value="">All Makes</option>
-                  <option>CEL</option><option>GGT</option><option>SIEMNES</option><option>ELDYNE</option>
-                </select>
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700">Specific Defect Search</label>
-                <select id="defect" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm">
-                    <option value="">-- No Defect Selected --</option>
-                    <option value="G/Joint Defective">G/Joint Defective</option>
-                    <option value="Cable defective">Cable defective</option>
-                    <option value="Obstruction in point">Obstruction in point</option>
-                </select>
-            </div>
-            <div class="md:col-span-1 flex items-end">
-                <button onclick="fetchData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition duration-200">
-                    Generate Report
-                </button>
-            </div>
+<div class="container">
+    <div class="header">
+        <div>
+            <h2 style="font-size: 22px;">S&T DHANBAD : FAILURE ANALYSIS ENGINE</h2>
+            <p style="font-size: 12px; opacity: 0.8;">Failure Insights Dashboard</p>
         </div>
-
-        <!-- Preview Area -->
-        <div id="loading" class="hidden flex justify-center py-10">
-            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
-        </div>
-     
-        <div id="previewContainer" class="hidden bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gray-100 p-4 border-b flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-800">Report Preview</h2>
-                <div class="flex space-x-2">
-                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white text-xs py-2 px-4 rounded font-bold">Download Excel</button>
-                    <button onclick="exportToWord()" class="bg-gray-600 hover:bg-gray-700 text-white text-xs py-2 px-4 rounded font-bold">Download Word</button>
-                    <button onclick="printReport()" class="bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-4 rounded font-bold shadow-sm">Print Report</button>
-                </div>
-            </div>
-            <div class="overflow-x-auto max-h-[600px]">
-                <table id="reportTable" class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-800 text-white sticky top-0" id="tableHeader"></thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="tableBody"></tbody>
-                </table>
-            </div>
-        </div>
+        <img src="https://wikimedia.org" style="height:50px; filter: brightness(0) invert(1);">
     </div>
 
-    <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNUtRBJeFvF4mnSeX3I-iBiHX1hSYMWIr1SYFDimD0oTfkaqJWmiNZi3iRHdoYUbPA/exec';
-        
-        async function fetchData() {
-            const loading = document.getElementById('loading');
-            const preview = document.getElementById('previewContainer');
-            
-            loading.classList.remove('hidden');
-            preview.classList.add('hidden');
+    <div class="filter-panel">
+        <div class="filter-group"><label>From Date</label><input type="date" id="start"></div>
+        <div class="filter-group"><label>To Date</label><input type="date" id="end"></div>
+        <div class="filter-group"><label>Station</label><input type="text" id="station" placeholder="Code" style="text-transform:uppercase"></div>
+        <div class="filter-group"><label>Officer</label>
+       <select id="off">
+          <option value="">All</option>
+          <option>DSTE/DHN</option>
+          <option>DSTE/W/DHN</option>
+          <option>ASTE/DHN</option>
+          <option>ASTE/GMO</option>
+          <option>ASTE/KQR</option>
+          <option>ASTE/BRKA</option>
+          <option>ASTE/DTO</option>
+          <option>DSTE/CPU</option>
+       </select></div>
+      
+        <div class="filter-group"><label>Asset Make</label><select id="make_filter">
+          <option value="">All</option>
+          <option>CEL</option>
+          <option>GGT</option>
+          <option>SIEMNES</option>
+          <option>ELDYNE</option>
+          <option>TWS</option>
+          <option>DELTRON</option>
+          <option>FRAUSCHER</option>
+          <option>WEBFIL</option>
+       </select></div>
+      
+        <div class="filter-group"><label>ICMS Head</label><select id="icms_filter">
+          <option value="">All</option>
+          <option>S&T</option>
+          <option>S&T Con</option>
+          <option>MA</option>
+          <option>MISC</option>
+          <option>C&W</option>
+          <option>Derailment</option>
+          <option>Electric/G</option>
+          <option>LC</option>
+          <option>PBOL</option>
+          <option>PRONI</option>
+          <option>ENGG</option>
+          <option>TRD</option>
+          <option>INC</option>
+          <option>WEA</option>
+          <option>SF</option>
+        </select></div>
+      
+      <div class="filter-group">
+    <label>Gear</label>
+    <select id="gear_filter">
+        <option value="">All Gears</option>
+        <option>POINT</option>
+        <option>AXLE COUNTER</option>
+        <option>MSDAC</option>
+        <option>ADVANCE</option>
+        <option>TRACK CIRCUIT</option>
+        <option>HOME</option>
+        <option>STARTER</option>
+        <option>IPS</option>
+        <option>UFSBI</option>
+        <option>EI</option>
+    </select>
+</div>
+      
+        <div class="filter-group"><label>Specific Defect</label><select id="defect_filter">
+            <option value="">-- No Defect --</option>
+            <option value="G/Joint Defective">G/Joint Defective</option>
+            <option value="Cable defective">Cable Defective</option>
+            <option value="Obstruction in point">Obstruction in Point</option>
+            <option value="Iron chips">Iron Chips</option>
+            <option value="Iron chips">Cable cut by Miscreant</option>
+            <option value="Iron chips">Cable cut by S&T Con/Works</option>
+            <option value="Iron chips">Cable cut by Engg</option>
+            <option value="Iron chips">Relay/Contact defective/High resistance</option>
+            <option value="Iron chips">Water logging</option>
+            <option value="Iron chips">Fuse blown</option>
+        </select></div>
+      
+        <button onclick="fetchData()" class="btn-gen">GENERATE ANALYSIS</button>
+    </div>
 
-            const params = new URLSearchParams({
-                start: document.getElementById('startDate').value,
-                end: document.getElementById('endDate').value,
-                station: document.getElementById('stationInput').value,
-                officer: document.getElementById('officer').value,
-                asset: document.getElementById('asset').value,
-                defect: document.getElementById('defect').value
-            });
+    <div id="summaryGrid" class="summary-grid">
+        <div class="card" style="border-top-color: #059669;"><div class="card-label">TOTAL RECORDS</div><div id="totalCount" style="font-size:42px; font-weight:900; color:#059669; margin-top:10px;">0</div></div>
+        <div class="card"><div class="card-label">TOP 5 OFFICERS</div><div id="topOfficers"></div></div>
+        <div class="card"><div class="card-label">TOP 5 GEARS</div><div id="topGears"></div></div>
+        <div class="card"><div class="card-label">TOP 5 ASSET MAKES</div><div id="topMakes"></div></div>
+        <div class="card" style="border-top-color: #dc2626;"><div class="card-label">TOP 5 ICMS HEADS</div><div id="topICMS"></div></div>
+    </div>
 
-            try {
-                const response = await fetch(`${SCRIPT_URL}?${params}`);
-                const data = await response.json();
-                renderTable(data);
-                loading.classList.add('hidden');
-                preview.classList.remove('hidden');
-            } catch (error) {
-                alert("Error fetching data. Check internet connection.");
-                loading.classList.add('hidden');
-            }
-        }
+    <div id="loading">🔍 Analysing Dhanbad Database...</div>
 
-        function renderTable(data) {
-            const headerRow = document.getElementById('tableHeader');
-            const bodyRow = document.getElementById('tableBody');
-            
-            headerRow.innerHTML = `<tr>${data.headers.map(h => `<th class="px-4 py-3 text-left font-bold uppercase text-xs border-r border-gray-700">${h}</th>`).join('')}</tr>`;
+    <div id="previewCard" class="preview-card">
+        <div class="table-header">
+            <h3 style="font-size:14px; font-weight: bold; color: #374151;">DETAILED FAILURE TABLE</h3>
+            <button onclick="exportToExcel()" style="background:#059669; color:white; border:none; padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold;">📥 FULL EXCEL DOWNLOAD</button>
+        </div>
+        <div class="table-container">
+            <table id="mainTable"><thead id="tHead"></thead><tbody id="tBody"></tbody></table>
+        </div>
+    </div>
+</div>
 
-            bodyRow.innerHTML = data.rows.map((row, index) => {
-                return `<tr class="hover:bg-gray-50 border-b">
-                    ${row.map((cell, cellIndex) => {
-                        if (cellIndex === 0) return `<td class="px-4 py-2 border-r text-center font-bold">${index + 1}</td>`;
-                        if (cellIndex === 9) return `<td class="px-4 py-2 border-r min-w-[250px] max-w-[400px] break-words">${cell || '-'}</td>`;
-                        return `<td class="px-4 py-2 border-r whitespace-nowrap">${cell || '-'}</td>`;
-                    }).join('')}
-                </tr>`;
-            }).join('');
-        }
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNUtRBJeFvF4mnSeX3I-iBiHX1hSYMWIr1SYFDimD0oTfkaqJWmiNZi3iRHdoYUbPA/exec';
+var globalRows = [];
+var globalHeaders = [];
 
-        function exportToExcel() {
-            const table = document.getElementById('reportTable');
-            if (!table || table.rows.length <= 1) return alert("Pehle report generate karein!");
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Failure_Report" });
-            XLSX.writeFile(wb, "Railway_Failure_Report.xlsx");
-        }
+async function fetchData() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('summaryGrid').style.display = 'none';
+    document.getElementById('previewCard').style.display = 'none';
 
-        function exportToWord() {
-            const table = document.getElementById("reportTable");
-            if (!table) return;
-            let header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org'><head><meta charset='utf-8'><style>table{border-collapse:collapse; width:100%;} th,td{border:1px solid black; padding:5px; text-align:left; font-size:10pt;}</style></head><body>";
-            let footer = "</body></html>";
-            let sourceHTML = header + table.outerHTML + footer;
-            let blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
-            let url = URL.createObjectURL(blob);
-            let link = document.createElement("a");
-            link.href = url;
-            link.download = 'Railway_Report.doc';
-            link.click();
-        }
+    var params = new URLSearchParams({
+        start: document.getElementById('start').value, 
+        end: document.getElementById('end').value,
+        station: document.getElementById('station').value, 
+        officer: document.getElementById('off').value, // Backend 'parameter.officer' ke liye
+        make: document.getElementById('make_filter').value, // Backend 'parameter.make' ke liye
+        icms: document.getElementById('icms_filter').value,
+        gear: document.getElementById('gear_filter').value,
+        defect: document.getElementById('defect_filter').value
+    });
 
-        function printReport() {
-            const table = document.getElementById("reportTable");
-            if (!table || table.rows.length <= 1) return alert("Pehle report generate karein!");
-            const printWindow = window.open('', '_blank');
-            const style = `<style>@media print { @page { size: landscape; margin: 10mm; } } body { font-family: sans-serif; font-size: 9pt; } h2 { text-align: center; color: #1e40af; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #000; padding: 4px; text-align: left; } th { background-color: #eee !important; -webkit-print-color-adjust: exact; }</style>`;
-            printWindow.document.write('<html><head><title>Print Report</title>' + style + '</head><body>');
-            printWindow.document.write('<h2>Railway Signaling Failure Report</h2>' + table.outerHTML);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            setTimeout(() => { printWindow.print(); printWindow.close(); }, 750);
-        }
-    </script>
+    try {
+        var response = await fetch(SCRIPT_URL + '?' + params.toString());
+        var data = await response.json();
+        globalRows = data.rows;
+        globalHeaders = data.headers;
+        runAnalysis(data.rows);
+        renderMainTable(data);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('summaryGrid').style.display = 'grid';
+        document.getElementById('previewCard').style.display = 'block';
+    } catch (e) { alert("Error fetching data!"); document.getElementById('loading').style.display = 'none'; }
+}
+
+function runAnalysis(rows) {
+    var stats = { off: {}, gear: {}, make: {}, icms: {} };
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        countItem(stats.off, row[4]);
+        countItem(stats.gear, row[8]);
+        countItem(stats.icms, row[11]);
+        countItem(stats.make, row[14]);
+    }
+    document.getElementById('totalCount').innerText = rows.length;
+    displayTop5('topOfficers', stats.off, 'Officer');
+    displayTop5('topGears', stats.gear, 'Gear');
+    displayTop5('topMakes', stats.make, 'Asset Make', true);
+    displayTop5('topICMS', stats.icms, 'ICMS Head');
+}
+
+function countItem(obj, val) {
+    if (!val || val === '-' || val === '') return;
+    obj[val] = (obj[val] || 0) + 1;
+}
+
+function displayTop5(id, obj, category, filterUnknown) {
+    var items = Object.keys(obj).map(function(k) { return [k, obj[k]]; });
+    if (filterUnknown) {
+        items = items.filter(function(i) { return !i[0].toLowerCase().includes('unknown'); });
+    }
+    items.sort(function(a, b) { return b[1] - a[1]; });
+    var top5 = items.slice(0, 5);
+    document.getElementById(id).innerHTML = top5.map(function(item) {
+        return '<div class="item-row" onclick="exportCategory(\'' + category + '\', \'' + item[0] + '\')">' +
+               '<span class="item-name">' + item[0] + '</span>' +
+               '<div style="display:flex; align-items:center; gap:10px;">' +
+               '<span style="font-weight:bold; color:#1e40af;">' + item[1] + '</span>' +
+               '<div class="dl-icon">↓</div></div></div>';
+    }).join('') || "<p style='font-size:11px;color:#999;padding:10px;'>No data</p>";
+}
+
+function exportCategory(category, value) {
+    var colMap = { 'Officer': 4, 'Gear': 8, 'ICMS Head': 11, 'Asset Make': 14 };
+    var idx = colMap[category];
+    var filtered = globalRows.filter(function(r) { return String(r[idx]).trim() === String(value).trim(); });
+    var sheetData = [globalHeaders];
+    for (var i = 0; i < filtered.length; i++) {
+        var row = Array.from(filtered[i]);
+        row[0] = i + 1;
+        sheetData.push(row);
+    }
+    var ws = XLSX.utils.aoa_to_sheet(sheetData);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, "Report_" + category + "_" + value + ".xlsx");
+}
+
+function renderMainTable(data) {
+    document.getElementById('tHead').innerHTML = '<tr>' + data.headers.map(h => '<th>' + h + '</th>').join('') + '</tr>';
+    document.getElementById('tBody').innerHTML = data.rows.map((row, i) => 
+        '<tr>' + row.map((c, j) => '<td class="' + (j === 9 ? 'remarks-cell' : '') + '" title="' + (j === 9 ? c : '') + '">' + (j === 0 ? i+1 : c || '-') + '</td>').join('') + '</tr>').join('');
+}
+
+function exportToExcel() {
+    var table = document.getElementById('mainTable');
+    XLSX.writeFile(XLSX.utils.table_to_book(table), "Full_S&T_Report.xlsx");
+}
+</script>
 </body>
 </html>

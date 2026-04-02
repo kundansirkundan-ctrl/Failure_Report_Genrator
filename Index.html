@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S&T Dhanbad : Advanced Analysis Dashboard</title>
+    <title>S&T Dhanbad : Failure Analysis Dashboard</title>
     <!-- Official SheetJS Stable Library -->
     <script type="text/javascript" src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f4f8; color: #333; padding: 15px; }
-        .container { max-width: 1600px; margin: 0 auto; }
+        .container { max-width: 1700px; margin: 0 auto; }
 
         /* Header & Filters */
         .header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: white; padding: 15px 25px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .filter-panel { background: white; padding: 15px; border-radius: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; border: 1px solid #d1d5db; margin-bottom: 15px; }
         .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-size: 10px; font-weight: bold; color: #4b5563; text-transform: uppercase; margin-bottom: 4px; }
-        .filter-group input, .filter-group select { padding: 8px; border: 1px solid #9ca3af; border-radius: 5px; font-size: 12px; outline: none; }
+        .filter-group label { font-size: 12px; font-weight: bold; color: #4b5563; text-transform: uppercase; margin-bottom: 4px; }
+        .filter-group input, .filter-group select { padding: 10px; border: 1px solid #9ca3af; border-radius: 5px; font-size: 12px; outline: none; }
 
         /* Analysis Cards */
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px; display: none; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px; display: none; }
         .card { background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #2563eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .card-label { font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #f3f4f6; margin-bottom: 10px; padding-bottom: 5px; text-transform: uppercase; }
+        .card-label { font-size: 12px; font-weight: 600; color: #1e3a8a; border-bottom: 2px solid #f3f4f6; margin-bottom: 10px; padding-bottom: 5px; text-transform: uppercase; }
         
         .item-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 6px 8px; border-bottom: 1px dashed #e5e7eb; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .item-row:hover { background: #f1f5f9; }
@@ -58,8 +58,8 @@
 <div class="container">
     <div class="header">
         <div>
-            <h2 style="font-size: 22px;">S&T DHANBAD : FAILURE ANALYSIS ENGINE</h2>
-            <p style="font-size: 12px; opacity: 0.8;">Failure Insights Dashboard</p>
+            <h2 style="font-size: 18px;">S&T DHANBAD : FAILURE ANALYSIS ENGINE</h2>
+            <p style="font-size: 14px; opacity: 0.8;">Failure Insights Dashboard</p>
         </div>
         <img src="https://wikimedia.org" style="height:50px; filter: brightness(0) invert(1);">
     </div>
@@ -149,6 +149,7 @@
     <div id="summaryGrid" class="summary-grid">
         <div class="card" style="border-top-color: #059669;"><div class="card-label">TOTAL RECORDS</div><div id="totalCount" style="font-size:42px; font-weight:900; color:#059669; margin-top:10px;">0</div></div>
         <div class="card"><div class="card-label">TOP 5 OFFICERS</div><div id="topOfficers"></div></div>
+        <div class="card"><div class="card-label">TOP 5 STATIONS (High Failure Rate)</div><div id="topStations"></div></div>
         <div class="card"><div class="card-label">TOP 5 GEARS</div><div id="topGears"></div></div>
         <div class="card"><div class="card-label">TOP 5 ASSET MAKES</div><div id="topMakes"></div></div>
         <div class="card" style="border-top-color: #dc2626;"><div class="card-label">TOP 5 ICMS HEADS</div><div id="topICMS"></div></div>
@@ -202,16 +203,18 @@ async function fetchData() {
 }
 
 function runAnalysis(rows) {
-    var stats = { off: {}, gear: {}, make: {}, icms: {} };
+    var stats = { off: {}, stn: {}, gear: {}, make: {}, icms: {} };
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         countItem(stats.off, row[4]);
+        countItem(stats.stn, row[3]);
         countItem(stats.gear, row[8]);
         countItem(stats.icms, row[11]);
         countItem(stats.make, row[14]);
     }
     document.getElementById('totalCount').innerText = rows.length;
     displayTop5('topOfficers', stats.off, 'Officer');
+    displayTop5('topStations', stats.stn, 'Station');
     displayTop5('topGears', stats.gear, 'Gear');
     displayTop5('topMakes', stats.make, 'Asset Make', true);
     displayTop5('topICMS', stats.icms, 'ICMS Head');
@@ -239,7 +242,7 @@ function displayTop5(id, obj, category, filterUnknown) {
 }
 
 function exportCategory(category, value) {
-    var colMap = { 'Officer': 4, 'Gear': 8, 'ICMS Head': 11, 'Asset Make': 14 };
+    var colMap = { 'Officer': 4, 'Station': 3, 'Gear': 8, 'ICMS Head': 11, 'Asset Make': 14 };
     var idx = colMap[category];
     var filtered = globalRows.filter(function(r) { return String(r[idx]).trim() === String(value).trim(); });
     var sheetData = [globalHeaders];

@@ -56,13 +56,25 @@
 <body>
 
 <div class="container">
-    <div class="header">
-        <div>
-            <h2 style="font-size: 18px;">S&T DHANBAD : FAILURE ANALYSIS ENGINE</h2>
-            <p style="font-size: 14px; opacity: 0.8;">Failure Insights Dashboard</p>
-        </div>
-        <img src="https://wikimedia.org" style="height:50px; filter: brightness(0) invert(1);">
+    <div class="header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 25px;">
+    <!-- Left Side: Text Content -->
+    <div style="text-align: left;">
+        <h2 style="font-size: 22px; margin: 0; font-weight: 800; letter-spacing: 0.5px;">
+            S&T DHANBAD : FAILURE ANALYSIS ENGINE
+        </h2>
+        <p style="font-size: 14px; opacity: 0.9; margin-top: 4px;">
+            Failure Insights Dashboard
+        </p>
     </div>
+
+    <!-- Right Side: Circular Logo -->
+    <div style="flex-shrink: 0;">
+        <img src="logo.png" 
+             style="height: 85px; width: 85px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); object-fit: cover;" 
+             alt="S&T Logo">
+    </div>
+</div>
+</div>
 
     <div class="filter-panel">
         <div class="filter-group"><label>From Date</label><input type="date" id="start"></div>

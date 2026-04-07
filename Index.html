@@ -21,19 +21,60 @@
 
     .container { max-width: 1700px; margin: 0 auto; }
 
-    /* --- DEEP BLUE HEADER --- */
-    .header { 
-        background: linear-gradient(145deg, #162e7a, #1e40af);
-        color: white; 
-        padding: 20px 30px; 
-        border-radius: 20px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        margin-bottom: 25px; 
-        box-shadow: 8px 8px 16px #a6b1bd, -8px -8px 16px #f8faff;
-        border: 1px solid rgba(255,255,255,0.05);
+   /* =========================================================
+   HEADER SECTION - DEEP BLUE SOFT UI
+   ========================================================= */
+
+.header { 
+    background: linear-gradient(145deg, #162e7a, #1e40af);
+    color: white; 
+    padding: 12px 25px; 
+    border-radius: 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px; 
+    
+    /* Neumorphic Pop-out Shadow (Matches Sidebars) */
+    box-shadow: 8px 8px 16px #a6b1bd, 
+                -4px -4px 12px #f8faff;
+    
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.header-content {
+    text-align: left;
+}
+
+.header-title {
+    font-size: 20px; /* Reduced from 22px to fit slim width */
+    margin: 0; 
+    font-weight: 800; 
+    letter-spacing: 0.5px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header-subtitle {
+    font-size: 13px; 
+    opacity: 0.85; 
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+/* Responsive adjustment for Mobile */
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 16px;
     }
+    .header-subtitle {
+        display: none; /* Mobile par subtitle hide taaki space bache */
+    }
+    .header {
+        padding: 10px 15px;
+    }
+}
+
 
     /* --- INSET FILTER PANEL --- */
     .filter-panel { 
@@ -49,7 +90,7 @@
     }
 
     .filter-group { flex: 1 1 200px; display: flex; flex-direction: column; }
-    .filter-group label { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+    .filter-group label { font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
 
     /* Elevated Inputs */
     .filter-group input, .filter-group select { 
@@ -81,8 +122,8 @@
 
     .card-label { 
         font-size: 12px; 
-        font-weight: 800; 
-        color: #1e40af; 
+        font-weight: 700; 
+        color: #f01628; 
         margin-bottom: 15px; 
         padding-bottom: 8px;
         border-bottom: 2px solid rgba(30, 64, 175, 0.15);
@@ -179,17 +220,13 @@
 <body>
 
 <div class="container">
-    <div class="header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 25px;">
+    <div class="header">
     <!-- Left Side: Text Content -->
-    <div style="text-align: left;">
-        <h2 style="font-size: 22px; margin: 0; font-weight: 800; letter-spacing: 0.5px;">
-            S&T DHANBAD : FAILURE ANALYSIS ENGINE
-        </h2>
-        <p style="font-size: 14px; opacity: 0.9; margin-top: 4px;">
-            Failure Insights Dashboard
-        </p>
+    <div class="header-content">
+        <h2 class="header-title">S&T DHANBAD : FAILURE ANALYSIS ENGINE</h2>
+        <p class="header-subtitle">Failure Insights Dashboard</p>
     </div>
-
+    
     <!-- Right Side: Circular Logo -->
     <div style="flex-shrink: 0;">
         <img src="logo.png" 
@@ -197,7 +234,10 @@
              alt="S&T Logo">
     </div>
 </div>
+  
 </div>
+
+   
 
     <div class="filter-panel">
         <div class="filter-group"><label>From Date</label><input type="date" id="start"></div>
@@ -264,19 +304,22 @@
     </select>
 </div>
       
-        <div class="filter-group"><label>Specific Defect</label><select id="defect_filter">
-            <option value="">-- No Defect --</option>
-            <option value="G/Joint Defective">G/Joint Defective</option>
-            <option value="Cable defective">Cable Defective</option>
-            <option value="Obstruction in point">Obstruction in Point</option>
-            <option value="Iron chips">Iron Chips</option>
-            <option value="Iron chips">Cable cut by Miscreant</option>
-            <option value="Iron chips">Cable cut by S&T Con/Works</option>
-            <option value="Iron chips">Cable cut by Engg</option>
-            <option value="Iron chips">Relay/Contact defective/High resistance</option>
-            <option value="Iron chips">Water logging</option>
-            <option value="Iron chips">Fuse blown</option>
-        </select></div>
+        <div class="filter-group">
+    <label>Specific Defect</label>
+    <select id="defect_filter">
+        <option value="">-- No Defect --</option>
+        <option value="G/Joint Defective">G/Joint Defective</option>
+        <option value="Cable defective">Cable Defective</option>
+        <option value="Obstruction in point">Obstruction in Point</option>
+        <option value="Iron chips">Iron Chips</option>
+        <option value="Cable cut by Miscreant">Cable cut by Miscreant</option>
+        <option value="Cable cut by S&T Con/Works">Cable cut by S&T Con/Works</option>
+        <option value="Cable cut by Engg">Cable cut by Engg</option>
+        <option value="Relay/Contact defective/High resistance">Relay/Contact defective</option>
+        <option value="Water logging">Water logging</option>
+        <option value="Fuse blown">Fuse blown</option>
+    </select>
+</div>
       
         <button onclick="fetchData()" class="btn-gen">GENERATE</button>
     </div>
